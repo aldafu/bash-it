@@ -1,6 +1,15 @@
 cite about-plugin
 about-plugin 'osx-specific functions'
 
+# OS X: Open new tabs in same directory
+if [ $(uname) = "Darwin" ]; then
+  if type update_terminal_cwd > /dev/null 2>&1 ; then
+    if ! [[ $PROMPT_COMMAND =~ (^|;)update_terminal_cwd($|;) ]] ; then
+      export PROMPT_COMMAND="$PROMPT_COMMAND;update_terminal_cwd"
+    fi
+  fi
+fi
+
 function tab() {
   about 'opens a new terminal tab'
   group 'osx'
@@ -11,9 +20,19 @@ function tab() {
     end
     tell application "Terminal"
       activate
-      do script with command " cd \"$PWD\"; $*" in window 1
+      do script with command " cd \"$PWD\"; $*" in window 0
     end tell
 EOF
+}
+
+# renames the current os x terminal tab title
+function tabname {
+  printf "\e]1;$1\a"
+}
+
+# renames the current os x terminal window title
+function winname {
+  printf "\e]2;$1\a"
 }
 
 # this one switches your os x dock between 2d and 3d
@@ -44,8 +63,25 @@ function dock-switch() {
     fi
 }
 
-# Download a file and open it in Preview
+function pman ()
+{
+    about 'view man documentation in Preview'
+    param '1: man page to view'
+    example '$ pman bash'
+    group 'osx'
+    man -t "${1}" | open -fa $PREVIEW
+}
 
+function pri ()
+{
+    about 'display information about Ruby classes, modules, or methods, in Preview'
+    param '1: Ruby method, module, or class'
+    example '$ pri Array'
+    group 'osx'
+    ri -T "${1}" | open -fa $PREVIEW
+}
+
+# Download a file and open it in Preview
 function prevcurl() {
   about 'download a file and open it in Preview'
   param '1: url'
@@ -56,5 +92,8 @@ function prevcurl() {
     echo "This function only works with Mac OS X"
     return 1
   fi
-  curl "$*" | open -fa "Preview"
+  curl "$*" | open -fa $PREVIEW
 }
+
+# Make this backwards compatible
+alias pcurl='prevcurl'
